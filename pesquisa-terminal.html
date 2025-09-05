@@ -522,11 +522,13 @@
   }
 
   async function postToWebhook(payload){
-    const res = await fetch(WEBHOOK_URL, {
+    const res = await fetch(https://script.google.com/macros/s/AKfycbyhwLscv3qxzH5qMraGgFY9H-VFmauPemghWPXA8XWo7ky6Xg4iu7EwMf1ylYvSY_QCxg/exec
+
+, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-Webhook-Token': WEBHOOK_TOKEN
+        'X-Webhook-Token': troque-por-um-segredo-bem-grande
       },
       body: JSON.stringify(payload),
       mode: 'cors'
@@ -602,3 +604,4 @@
 </script>
 </body>
 </html>
+
