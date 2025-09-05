@@ -1,0 +1,604 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Pesquisa de Clientes — Terminal Economatica</title>
+<meta name="color-scheme" content="light dark" />
+<style>
+  :root{
+    --bg: #0b0c10;
+    --card:#12151b;
+    --text:#e8ecf1;
+    --muted:#9aa7b2;
+    --brand:#4cc9f0;
+    --brand-2:#48bfe3;
+    --ok:#2ecc71;
+    --warn:#f39c12;
+    --err:#e74c3c;
+    --border:#232833;
+    --input:#0f131a;
+    --shadow: 0 8px 24px rgba(0,0,0,.25);
+  }
+  @media (prefers-color-scheme: light){
+    :root{
+      --bg:#f6f8fb; --card:#ffffff; --text:#0c1624; --muted:#5a6b7a;
+      --brand:#2563eb; --brand-2:#3b82f6; --border:#e6eaf0; --input:#f8fafc;
+      --shadow: 0 8px 24px rgba(15,23,42,.08);
+    }
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji";
+    background: var(--bg); color: var(--text); line-height:1.45;
+  }
+  header{
+    position: sticky; top:0; z-index:5; background: linear-gradient(180deg, rgba(0,0,0,.18), transparent);
+    backdrop-filter: blur(6px);
+  }
+  .wrap{max-width: 980px; margin: 0 auto; padding: 24px 20px;}
+  .brand{display:flex; align-items:center; gap:12px;}
+  .logo{width:36px;height:36px;border-radius:10px; background: linear-gradient(135deg,var(--brand),var(--brand-2)); box-shadow: var(--shadow);}
+  h1{font-size: clamp(22px, 3.2vw, 32px); margin:0}
+  .muted{color:var(--muted)}
+  .card{background: var(--card); border:1px solid var(--border); border-radius:16px; padding: 22px; box-shadow: var(--shadow);}
+  .progress{height:10px; background: linear-gradient(90deg, var(--brand), var(--brand-2)); width: 0%; border-radius: 999px; transition: width .25s ease;}
+  .progress-wrap{height:10px; background:var(--border); border-radius:999px; overflow:hidden;margin:14px 0 0}
+  form{display:grid; gap:22px; margin-top:20px}
+  fieldset{border:none; padding:0; margin:0}
+  legend{font-weight:700; margin-bottom:8px; font-size:18px}
+  .help{font-size:12px; color:var(--muted); margin-top:2px}
+  .grid-2{display:grid; gap:14px}
+  @media(min-width:720px){.grid-2{grid-template-columns:1fr 1fr}}
+  .option{display:flex; gap:10px; align-items:flex-start; padding:10px 12px; border:1px solid var(--border); border-radius:12px; background: var(--input)}
+  .option input{margin-top:3px}
+  .other-wrap{display:flex; gap:10px; margin-top:8px}
+  .other-wrap input[type=text]{flex:1}
+  input[type=text], textarea, select{
+    width:100%; padding:12px 14px; border-radius:12px; border:1px solid var(--border); background:var(--input); color:var(--text);
+  }
+  textarea{min-height:96px; resize:vertical}
+  .likert{border:1px solid var(--border); border-radius:12px; overflow:hidden}
+  .likert table{width:100%; border-collapse:collapse; font-size:14px}
+  .likert th, .likert td{border-bottom:1px solid var(--border); padding:10px; text-align:center}
+  .likert th:first-child, .likert td:first-child{text-align:left; width:44%}
+  .chips{display:flex; flex-wrap:wrap; gap:8px}
+  .chip{padding:7px 10px; border:1px dashed var(--border); border-radius:999px; font-size:12px; color:var(--muted)}
+  .actions{display:flex; gap:12px; flex-wrap:wrap; align-items:center}
+  button{appearance:none; border:none; cursor:pointer; font-weight:700; border-radius:12px; padding:12px 16px;}
+  .primary{background: linear-gradient(135deg,var(--brand),var(--brand-2)); color:white}
+  .ghost{background:transparent; border:1px solid var(--border); color:var(--text)}
+  .error{color:var(--err); font-size:13px; margin-top:6px; display:none}
+  .limit-hint{color:var(--warn); font-size:12px; margin-top:6px; display:none}
+  footer{opacity:.8; margin:30px 0 60px}
+  .nps{display:flex; gap:8px; flex-wrap:wrap}
+  .nps label{display:grid; place-items:center; width:42px; height:42px; border-radius:10px; border:1px solid var(--border); background:var(--input)}
+  .nps input{display:none}
+  .nps input:checked + span{outline:2px solid var(--brand); box-shadow: inset 0 0 0 2px var(--card)}
+  .success{border-left:4px solid var(--ok); padding:12px 14px; background: rgba(46, 204, 113, .08); border-radius:10px; display:none;}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="brand">
+      <div class="logo" aria-hidden="true"></div>
+      <div>
+        <h1>Pesquisa de Clientes — Terminal Economatica</h1>
+        <div class="muted">Leva ~4–6 minutos. Suas respostas ajudam a priorizar nosso roadmap. 🔧</div>
+      </div>
+    </div>
+    <div class="progress-wrap" aria-hidden="true"><div id="progress" class="progress"></div></div>
+  </div>
+</header>
+
+<main class="wrap">
+  <form id="form" novalidate>
+    <!-- Q1 -->
+    <fieldset class="card" data-q="Q1">
+      <legend>Q1. Seu perfil profissional <span class="muted">(escolha 1 ou mais)</span></legend>
+      <div class="grid-2">
+        <label class="option"><input type="checkbox" name="perfil" value="Gestor(a) de recursos"> <span>Gestor(a) de recursos</span></label>
+        <label class="option"><input type="checkbox" name="perfil" value="Analista (buy/sell)"> <span>Analista (buy side / sell side)</span></label>
+        <label class="option"><input type="checkbox" name="perfil" value="Assessor(a)/Consultor(a)"> <span>Assessor(a) / Consultor(a) de investimentos</span></label>
+        <label class="option"><input type="checkbox" name="perfil" value="Trader"> <span>Trader</span></label>
+        <label class="option"><input type="checkbox" name="perfil" value="RI"> <span>RI (Relações com Investidores)</span></label>
+        <label class="option"><input type="checkbox" name="perfil" value="Banco/Tesouraria"> <span>Banco / Tesouraria</span></label>
+        <label class="option"><input type="checkbox" name="perfil" value="Family Office"> <span>Family Office</span></label>
+        <label class="option"><input type="checkbox" name="perfil" value="Academia/Universidade"> <span>Academia / Universidade</span></label>
+        <label class="option"><input type="checkbox" name="perfil" value="Investidor profissional"> <span>Investidor profissional</span></label>
+        <div>
+          <label class="option"><input type="checkbox" id="perfilOutros" name="perfil" value="Outros"> <span>Outros</span></label>
+          <div class="other-wrap"><input type="text" id="perfilOutrosTxt" placeholder="Especifique (opcional)" disabled></div>
+        </div>
+      </div>
+      <div class="error">Marque pelo menos uma opção.</div>
+    </fieldset>
+
+    <!-- Q2 -->
+    <fieldset class="card" data-q="Q2">
+      <legend>Q2. Seu nível de uso do Terminal <span class="muted">(escolha uma)</span></legend>
+      <label class="option"><input type="radio" name="uso" value="Uso diário - múltiplos módulos" required> <span>Uso diário - múltiplos módulos</span></label>
+      <label class="option"><input type="radio" name="uso" value="Uso diário - módulos específicos"> <span>Uso diário - módulos específicos</span></label>
+      <label class="option"><input type="radio" name="uso" value="Uso semanal"> <span>Uso semanal</span></label>
+      <label class="option"><input type="radio" name="uso" value="Uso esporádico"> <span>Uso esporádico (algumas vezes no mês)</span></label>
+      <label class="option"><input type="radio" name="uso" value="Atualmente não estou usando"> <span>Atualmente não estou usando</span></label>
+      <div class="error">Selecione uma opção.</div>
+    </fieldset>
+
+    <!-- Q3 -->
+    <fieldset class="card" data-q="Q3">
+      <legend>Q3. Quais módulos/recursos você usa com maior frequência? <span class="muted">(marque quantos precisar)</span></legend>
+      <div class="grid-2">
+        <label class="option"><input type="checkbox" name="modulos" value="Notícias"> <span>Notícias</span></label>
+        <label class="option"><input type="checkbox" name="modulos" value="Cotações"> <span>Cotações</span></label>
+        <label class="option"><input type="checkbox" name="modulos" value="Gráficos"> <span>Gráficos</span></label>
+        <label class="option"><input type="checkbox" name="modulos" value="Curvas de Juros (DI)"> <span>Curvas de Juros (DI)</span></label>
+        <label class="option"><input type="checkbox" name="modulos" value="Calendário / Agenda de eventos"> <span>Calendário / Agenda de eventos</span></label>
+        <label class="option"><input type="checkbox" name="modulos" value="Fundamentos"> <span>Fundamentos</span></label>
+        <label class="option"><input type="checkbox" name="modulos" value="Book de Ofertas"> <span>Book de Ofertas</span></label>
+        <label class="option"><input type="checkbox" name="modulos" value="Times & Trades"> <span>Times & Trades</span></label>
+        <label class="option"><input type="checkbox" name="modulos" value="Painéis de moedas"> <span>Painéis de moedas</span></label>
+        <label class="option"><input type="checkbox" name="modulos" value="The Analyst (IA)"> <span>The Analyst (IA)</span></label>
+        <label class="option"><input type="checkbox" name="modulos" value="Add-in de Cotações RT (Excel)"> <span>Add-in de Cotações RT (Excel)</span></label>
+        <div>
+          <label class="option"><input type="checkbox" id="modOutros" name="modulos" value="Outros"> <span>Outros</span></label>
+          <div class="other-wrap"><input type="text" id="modOutrosTxt" placeholder="Especifique (opcional)" disabled></div>
+        </div>
+      </div>
+    </fieldset>
+
+    <!-- Q4 Likert -->
+    <fieldset class="card" data-q="Q4">
+      <legend>Q4. Satisfação por módulo que você utiliza <span class="muted">(1 = muito insatisfeito … 5 = muito satisfeito)</span></legend>
+      <div class="likert" role="group" aria-label="Satisfação por módulo">
+        <table>
+          <thead>
+            <tr>
+              <th>Módulo</th>
+              <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th>
+            </tr>
+          </thead>
+          <tbody id="likertBody"></tbody>
+        </table>
+      </div>
+      <div class="help">Preencha apenas os módulos que você usa.</div>
+    </fieldset>
+
+    <!-- Q5 -->
+    <fieldset class="card" data-q="Q5" data-limit="3">
+      <legend>Q5. Principais fatores de contratação/renovação <span class="muted">(escolha até 3)</span></legend>
+      <div class="grid-2" id="q5">
+        <label class="option"><input type="checkbox" name="fatores" value="Confiabilidade e consistência dos dados"> <span>Confiabilidade e consistência dos dados</span></label>
+        <label class="option"><input type="checkbox" name="fatores" value="Cobertura e curadoria de notícias (ex.: Arko)"> <span>Cobertura e curadoria de notícias (ex.: Arko)</span></label>
+        <label class="option"><input type="checkbox" name="fatores" value="Cotações/RT e desempenho do monitoramento"> <span>Cotações/RT e desempenho do monitoramento</span></label>
+        <label class="option"><input type="checkbox" name="fatores" value="Integração com Excel (addin)"> <span>Integração com Excel (addin)</span></label>
+        <label class="option"><input type="checkbox" name="fatores" value="Facilidade de uso / UX"> <span>Facilidade de uso / UX</span></label>
+        <label class="option"><input type="checkbox" name="fatores" value="Abrangência (ativos, séries históricas)"> <span>Abrangência (ativos, séries históricas)</span></label>
+        <label class="option"><input type="checkbox" name="fatores" value="Suporte/treinamento"> <span>Suporte/treinamento</span></label>
+        <label class="option"><input type="checkbox" name="fatores" value="Preço/ROI"> <span>Preço/ROI</span></label>
+        <label class="option"><input type="checkbox" name="fatores" value="Marca e reputação Economatica"> <span>Marca e reputação Economatica</span></label>
+        <div>
+          <label class="option"><input type="checkbox" id="fatOutros" name="fatores" value="Outros"> <span>Outros</span></label>
+          <div class="other-wrap"><input type="text" id="fatOutrosTxt" placeholder="Especifique (opcional)" disabled></div>
+        </div>
+      </div>
+      <div class="limit-hint">Você pode selecionar no máximo 3 opções.</div>
+    </fieldset>
+
+    <!-- Q6 -->
+    <fieldset class="card" data-q="Q6">
+      <legend>Q6. Como você costuma acessar e operar? <span class="muted">(marque quantos precisar)</span></legend>
+      <div class="grid-2">
+        <label class="option"><input type="checkbox" name="acesso" value="Web (desktop/notebook)"> <span>Web (desktop/notebook)</span></label>
+        <label class="option"><input type="checkbox" name="acesso" value="Mobile (smartphone/tablet)"> <span>Mobile (smartphone/tablet)</span></label>
+        <label class="option"><input type="checkbox" name="acesso" value="Uso notificações (push/e-mail) ativas"> <span>Uso notificações (push/e-mail) ativas</span></label>
+        <label class="option"><input type="checkbox" name="acesso" value="Exporto dados com frequência (CSV/Excel)"> <span>Exporto dados com frequência (CSV/Excel)</span></label>
+        <label class="option"><input type="checkbox" name="acesso" value="Integro com planilhas (Addin Excel)"> <span>Integro com planilhas (Addin Excel)</span></label>
+        <div>
+          <label class="option"><input type="checkbox" id="accOutros" name="acesso" value="Outros"> <span>Outros</span></label>
+          <div class="other-wrap"><input type="text" id="accOutrosTxt" placeholder="Especifique (opcional)" disabled></div>
+        </div>
+      </div>
+    </fieldset>
+
+    <!-- Q7 -->
+    <fieldset class="card" data-q="Q7">
+      <legend>Q7. O que faz falta hoje no Terminal? <span class="muted">(marque quantos precisar)</span></legend>
+      <div class="grid-2">
+        <label class="option"><input type="checkbox" name="faltas" value="Mais Curvas (inflação, NTN-B etc)"> <span>Mais Curvas (inflação, NTN-B etc)</span></label>
+        <label class="option"><input type="checkbox" name="faltas" value="Inflação implícita (breakeven)"> <span>Inflação implícita (breakeven)</span></label>
+        <label class="option"><input type="checkbox" name="faltas" value="API/serviços de dados (stream/consulta)"> <span>API/serviços de dados (stream/consulta)</span></label>
+        <label class="option"><input type="checkbox" name="faltas" value="Módulo de opções"> <span>Módulo de opções</span></label>
+        <label class="option"><input type="checkbox" name="faltas" value="Consolidador de carteiras"> <span>Consolidador de carteiras</span></label>
+        <label class="option"><input type="checkbox" name="faltas" value="Calculadora de renda fixa (PU, duration etc.)"> <span>Calculadora de renda fixa (PU, duration etc.)</span></label>
+        <label class="option"><input type="checkbox" name="faltas" value="Mais dados de RF (LCI/LCA/CDB), CRI/CRA, ratings"> <span>Mais dados de RF (LCI/LCA/CDB), CRI/CRA, ratings</span></label>
+        <label class="option"><input type="checkbox" name="faltas" value="Índices/commodities internacionais"> <span>Índices/commodities internacionais</span></label>
+        <label class="option"><input type="checkbox" name="faltas" value="Mais fontes/alcance de notícias internacionais"> <span>Mais fontes/alcance de notícias internacionais</span></label>
+        <label class="option"><input type="checkbox" name="faltas" value="Maior integração Google Sheets/Office 365"> <span>Maior integração Google Sheets/Office 365</span></label>
+        <label class="option"><input type="checkbox" name="faltas" value="Mais personalização de alertas/filtros"> <span>Mais personalização de alertas/filtros</span></label>
+        <div>
+          <label class="option"><input type="checkbox" id="faltOutros" name="faltas" value="Outros"> <span>Outros</span></label>
+          <div class="other-wrap"><input type="text" id="faltOutrosTxt" placeholder="Especifique (opcional)" disabled></div>
+        </div>
+      </div>
+    </fieldset>
+
+    <!-- Q8 -->
+    <fieldset class="card" data-q="Q8" data-limit="3">
+      <legend>Q8. Melhorias prioritárias nos módulos existentes <span class="muted">(escolha até 3)</span></legend>
+      <div class="grid-2">
+        <label class="option"><input type="checkbox" name="melhorias" value="Notícias: filtros por relevância/keywords e menos ruído"> <span>Notícias: filtros por relevância/keywords e menos ruído</span></label>
+        <label class="option"><input type="checkbox" name="melhorias" value="Cotações: listas grandes (reordenação/colar ativos), alertas custom"> <span>Cotações: listas grandes (reordenação/colar ativos), alertas custom</span></label>
+        <label class="option"><input type="checkbox" name="melhorias" value="Gráficos: intervalos (1D/5D/1M…), estudos técnicos, múltiplos eixos"> <span>Gráficos: intervalos (1D/5D/1M…), estudos técnicos, múltiplos eixos</span></label>
+        <label class="option"><input type="checkbox" name="melhorias" value="Curvas de Juros: spreads entre curvas, histórico por DU, painel de spreads"> <span>Curvas de Juros: spreads entre curvas, histórico por DU, painel de spreads</span></label>
+        <label class="option"><input type="checkbox" name="melhorias" value="Fundamentos: layout de DFs, capa da empresa, consolidado/não consolidado, exportação parquet"> <span>Fundamentos: layout de DFs, capa da empresa, consolidado/não consolidado, exportação parquet</span></label>
+        <label class="option"><input type="checkbox" name="melhorias" value="Calendário: filtros por tipo/empresa e integração Outlook/Google"> <span>Calendário: filtros por tipo/empresa e integração Outlook/Google</span></label>
+        <label class="option"><input type="checkbox" name="melhorias" value="Book/Times & Trades: agressores/heatmap e usabilidade"> <span>Book/Times & Trades: agressores/heatmap e usabilidade</span></label>
+        <label class="option"><input type="checkbox" name="melhorias" value="Exportações: performance e limites de linhas"> <span>Exportações: performance e limites de linhas</span></label>
+        <label class="option"><input type="checkbox" name="melhorias" value="The Analyst (IA): mais contextos/explicações acionáveis"> <span>The Analyst (IA): mais contextos/explicações acionáveis</span></label>
+        <div>
+          <label class="option"><input type="checkbox" id="melhOutros" name="melhorias" value="Outros"> <span>Outros</span></label>
+          <div class="other-wrap"><input type="text" id="melhOutrosTxt" placeholder="Especifique (opcional)" disabled></div>
+        </div>
+      </div>
+      <div class="limit-hint">Você pode selecionar no máximo 3 opções.</div>
+    </fieldset>
+
+    <!-- Q9 -->
+    <fieldset class="card" data-q="Q9">
+      <legend>Q9. Barreiras para uso/adoção hoje <span class="muted">(marque quantos precisar)</span></legend>
+      <div class="grid-2">
+        <label class="option"><input type="checkbox" name="barreiras" value="Performance/estabilidade"> <span>Performance/estabilidade</span></label>
+        <label class="option"><input type="checkbox" name="barreiras" value="Curva de aprendizado/treinamento"> <span>Curva de aprendizado/treinamento</span></label>
+        <label class="option"><input type="checkbox" name="barreiras" value="Falta de integração (Excel/Sheets/API)"> <span>Falta de integração (Excel/Sheets/API)</span></label>
+        <label class="option"><input type="checkbox" name="barreiras" value="Ausência de funcionalidade específica crítica"> <span>Ausência de funcionalidade específica crítica</span></label>
+        <label class="option"><input type="checkbox" name="barreiras" value="Preço/orçamento"> <span>Preço/orçamento</span></label>
+        <label class="option"><input type="checkbox" name="barreiras" value="Comunicação/visibilidade de novidades (não conheço o que já existe)"> <span>Comunicação/visibilidade de novidades (não conheço o que já existe)</span></label>
+        <label class="option"><input type="checkbox" name="barreiras" value="Compliance/segurança"> <span>Compliance/segurança</span></label>
+        <label class="option"><input type="checkbox" name="barreiras" value="RT/mercados não contratados"> <span>RT/mercados não contratados</span></label>
+        <div>
+          <label class="option"><input type="checkbox" id="barrOutros" name="barreiras" value="Outros"> <span>Outros</span></label>
+          <div class="other-wrap"><input type="text" id="barrOutrosTxt" placeholder="Especifique (opcional)" disabled></div>
+        </div>
+      </div>
+    </fieldset>
+
+    <!-- Q10 -->
+    <fieldset class="card" data-q="Q10">
+      <legend>Q10. Recomendação geral (NPS) e comentário opcional</legend>
+      <div class="chips" aria-hidden="true">
+        <span class="chip">0–6: Detratores</span>
+        <span class="chip">7–8: Neutros</span>
+        <span class="chip">9–10: Promotores</span>
+      </div>
+      <div class="nps" role="group" aria-label="NPS de 0 a 10">
+        <!-- Radios 0-10 renderizados via JS -->
+      </div>
+      <div class="error">Selecione uma nota de 0 a 10.</div>
+      <div style="margin-top:10px">
+        <label for="comentario" class="muted">Comentário (opcional):</label>
+        <textarea id="comentario" name="comentario" placeholder="Se quiser, conte rapidamente o principal motivo da sua nota ou alguma sugestão."></textarea>
+      </div>
+    </fieldset>
+
+    <div class="actions">
+      <button type="button" class="ghost" id="resetar">Limpar respostas</button>
+      <button type="submit" class="primary">Enviar respostas</button>
+      <span class="muted" id="autosaveHint">Salvando automaticamente…</span>
+    </div>
+    <div class="success" id="sucesso">✅ Respostas preparadas!</div>
+  </form>
+
+  <footer class="muted">
+    © Economatica — Pesquisa de Clientes. Este formulário é uma prova de conceito off-Google Forms (single-file).
+  </footer>
+</main>
+
+<script>
+(function(){
+  const $ = sel => document.querySelector(sel);
+  const $$ = sel => Array.from(document.querySelectorAll(sel));
+
+  /* ===== CONFIG DO WEBHOOK (troque aqui) ===== */
+  const WEBHOOK_URL = 'https://script.google.com/macros/s/SEU_WEB_APP/exec';
+  const WEBHOOK_TOKEN = 'troque-por-um-segredo-bem-grande';
+
+  /* ===== util ===== */
+  function wireOther(checkboxId, inputId){
+    const cb = $("#"+checkboxId);
+    const txt = $("#"+inputId);
+    if(!cb || !txt) return;
+    const sync = ()=>{ txt.disabled = !cb.checked; if(!cb.checked) txt.value = ""; autosave(); };
+    cb.addEventListener("change", sync);
+    sync();
+  }
+
+  function wireLimit(fieldset){
+    const limit = parseInt(fieldset.dataset.limit || "0", 10);
+    if(!limit) return;
+    const boxes = Array.from(fieldset.querySelectorAll('input[type="checkbox"]'));
+    const hint = fieldset.querySelector(".limit-hint");
+    function enforce(){
+      const checked = boxes.filter(b=>b.checked);
+      const over = checked.length > limit;
+      hint.style.display = over ? "block" : "none";
+      if(over){
+        const last = checked.pop();
+        last.checked = false;
+      }
+      autosave();
+    }
+    boxes.forEach(b=>b.addEventListener("change", enforce));
+  }
+
+  const likertModules = [
+    "Notícias","Cotações","Gráficos","Curvas de Juros (DI)","Calendário / Agenda de eventos",
+    "Fundamentos","Book de Ofertas","Times & Trades","Painéis de moedas","The Analyst (IA)",
+    "Add-in de Cotações RT (Excel)"
+  ];
+  function buildLikert(){
+    const tbody = $("#likertBody");
+    likertModules.forEach(name=>{
+      const tr = document.createElement("tr");
+      const first = document.createElement("td"); first.textContent = name; tr.appendChild(first);
+      for(let i=1;i<=5;i++){
+        const td = document.createElement("td");
+        const id = `lk_${name.replace(/[^a-z0-9]/gi,'_')}_${i}`;
+        td.innerHTML = `<label style="display:inline-flex;gap:6px;align-items:center;cursor:pointer">
+          <input type="radio" name="likert_${name}" value="${i}" id="${id}">
+          <span>${i}</span>
+        </label>`;
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    });
+  }
+
+  function buildNPS(){
+    const wrap = document.querySelector(".nps");
+    for(let i=0;i<=10;i++){
+      const input = document.createElement("input"); input.type="radio"; input.name="nps"; input.value=String(i); input.id="nps_"+i;
+      const span = document.createElement("span"); span.textContent = i;
+      const label = document.createElement("label"); label.appendChild(input); label.appendChild(span);
+      wrap.appendChild(label);
+    }
+  }
+
+  const LS_KEY = "pesquisa_economatica_v1";
+  function serialize(){
+    const data = {};
+    const multi = name => $$(`input[name="${name}"]:checked`).map(i=>i.value);
+    const otherIf = (checkboxId, textId) => {
+      const cb = $("#"+checkboxId), txt = $("#"+textId);
+      return cb && cb.checked && txt ? txt.value.trim() : "";
+    };
+    data.Q1 = multi("perfil");
+    data.Q1_outros = otherIf("perfilOutros","perfilOutrosTxt");
+
+    data.Q2 = ($$('input[name="uso"]:checked')[0]||{}).value || "";
+
+    data.Q3 = multi("modulos");
+    data.Q3_outros = otherIf("modOutros","modOutrosTxt");
+
+    data.Q4 = {};
+    likertModules.forEach(m=>{
+      const val = ($$(`input[name="likert_${m}"]:checked`)[0]||{}).value || "";
+      if(val) data.Q4[m] = Number(val);
+    });
+
+    data.Q5 = multi("fatores");
+    data.Q5_outros = otherIf("fatOutros","fatOutrosTxt");
+
+    data.Q6 = multi("acesso");
+    data.Q6_outros = otherIf("accOutros","accOutrosTxt");
+
+    data.Q7 = multi("faltas");
+    data.Q7_outros = otherIf("faltOutros","faltOutrosTxt");
+
+    data.Q8 = multi("melhorias");
+    data.Q8_outros = otherIf("melhOutros","melhOutrosTxt");
+
+    data.Q9 = multi("barreiras");
+    data.Q9_outros = otherIf("barrOutros","barrOutrosTxt");
+
+    data.Q10_NPS = ($$('input[name="nps"]:checked')[0]||{}).value || "";
+    data.Q10_comentario = ($("#comentario").value||"").trim();
+
+    data._meta = { ts_iso: new Date().toISOString(), ua: navigator.userAgent };
+    data._token = WEBHOOK_TOKEN; // quando REQUIRE_TOKEN = true no Apps Script
+    return data;
+  }
+  function autosave(){
+    localStorage.setItem(LS_KEY, JSON.stringify(serialize()));
+    updateProgress();
+  }
+  function restore(){
+    const raw = localStorage.getItem(LS_KEY);
+    if(!raw) return;
+    try{
+      const d = JSON.parse(raw);
+
+      const checkMany = (name, vals) => $$( `input[name="${name}"]`).forEach(i=>{ i.checked = (vals||[]).includes(i.value); });
+
+      checkMany("perfil", d.Q1||[]);
+      $("#perfilOutros").checked = (d.Q1||[]).includes("Outros");
+      $("#perfilOutrosTxt").disabled = !$("#perfilOutros").checked;
+      $("#perfilOutrosTxt").value = d.Q1_outros||"";
+
+      if(d.Q2) $$('input[name="uso"]').forEach(r=>{ r.checked = (r.value===d.Q2); });
+
+      checkMany("modulos", d.Q3||[]);
+      $("#modOutros").checked = (d.Q3||[]).includes("Outros");
+      $("#modOutrosTxt").disabled = !$("#modOutros").checked;
+      $("#modOutrosTxt").value = d.Q3_outros||"";
+
+      if(d.Q4){
+        Object.entries(d.Q4).forEach(([m,v])=>{
+          const el = document.querySelector(`input[name="likert_${m}"][value="${v}"]`);
+          if(el) el.checked = true;
+        });
+      }
+
+      checkMany("fatores", d.Q5||[]);
+      $("#fatOutros").checked = (d.Q5||[]).includes("Outros");
+      $("#fatOutrosTxt").disabled = !$("#fatOutros").checked;
+      $("#fatOutrosTxt").value = d.Q5_outros||"";
+
+      checkMany("acesso", d.Q6||[]);
+      $("#accOutros").checked = (d.Q6||[]).includes("Outros");
+      $("#accOutrosTxt").disabled = !$("#accOutros").checked;
+      $("#accOutrosTxt").value = d.Q6_outros||"";
+
+      checkMany("faltas", d.Q7||[]);
+      $("#faltOutros").checked = (d.Q7||[]).includes("Outros");
+      $("#faltOutrosTxt").disabled = !$("#faltOutros").checked;
+      $("#faltOutrosTxt").value = d.Q7_outros||"";
+
+      checkMany("melhorias", d.Q8||[]);
+      $("#melhOutros").checked = (d.Q8||[]).includes("Outros");
+      $("#melhOutrosTxt").disabled = !$("#melhOutros").checked;
+      $("#melhOutrosTxt").value = d.Q8_outros||"";
+
+      checkMany("barreiras", d.Q9||[]);
+      $("#barrOutros").checked = (d.Q9||[]).includes("Outros");
+      $("#barrOutrosTxt").disabled = !$("#barrOutros").checked;
+      $("#barrOutrosTxt").value = d.Q9_outros||"";
+
+      if(d.Q10_NPS) $$('input[name="nps"]').forEach(r=>{ r.checked = (r.value===String(d.Q10_NPS)); });
+      $("#comentario").value = d.Q10_comentario||"";
+    }catch(e){ console.warn("Falha ao restaurar autosave", e); }
+    updateProgress();
+  }
+
+  function updateProgress(){
+    const total = 10;
+    let score = 0;
+    const d = serialize();
+
+    if((d.Q1||[]).length) score++;
+    if(d.Q2) score++;
+    if((d.Q3||[]).length) score++;
+    if(Object.keys(d.Q4||{}).length) score++;
+    if((d.Q5||[]).length) score++;
+    if((d.Q6||[]).length) score++;
+    if((d.Q7||[]).length) score++;
+    if((d.Q8||[]).length) score++;
+    if((d.Q9||[]).length) score++;
+    if(d.Q10_NPS) score++;
+
+    $("#progress").style.width = Math.round((score/total)*100) + "%";
+  }
+
+  function validate(){
+    let ok = true;
+    const showError = (qSelector, show)=>{
+      const fs = document.querySelector(qSelector);
+      const err = fs.querySelector(".error");
+      if(err) err.style.display = show ? "block" : "none";
+    };
+    const d = serialize();
+
+    const q1ok = (d.Q1||[]).length > 0;
+    showError('[data-q="Q1"]', !q1ok); ok = ok && q1ok;
+
+    const q2ok = !!d.Q2;
+    showError('[data-q="Q2"]', !q2ok); ok = ok && q2ok;
+
+    const q10ok = d.Q10_NPS !== "";
+    showError('[data-q="Q10"]', !q10ok); ok = ok && q10ok;
+
+    return ok;
+  }
+
+  function downloadJSON(obj){
+    const blob = new Blob([JSON.stringify(obj, null, 2)], {type:"application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "respostas_pesquisa_economatica.json";
+    document.body.appendChild(a);
+    a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 1500);
+  }
+
+  async function postToWebhook(payload){
+    const res = await fetch(WEBHOOK_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Webhook-Token': WEBHOOK_TOKEN
+      },
+      body: JSON.stringify(payload),
+      mode: 'cors'
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json().catch(()=> ({}));
+    if (!json.ok) throw new Error(json.error || 'Erro no endpoint');
+    return json;
+  }
+
+  // ---------- init ----------
+  buildLikert();
+  buildNPS();
+
+  // wire "Outros"
+  wireOther("perfilOutros","perfilOutrosTxt");
+  wireOther("modOutros","modOutrosTxt");
+  wireOther("fatOutros","fatOutrosTxt");
+  wireOther("accOutros","accOutrosTxt");
+  wireOther("faltOutros","faltOutrosTxt");
+  wireOther("melhOutros","melhOutrosTxt");
+  wireOther("barrOutros","barrOutrosTxt");
+
+  // wire limits
+  $$("fieldset[data-limit]").forEach(wireLimit);
+
+  // autosave on input
+  document.addEventListener("input", (e)=>{
+    if(e.target.matches("input, textarea, select")) autosave();
+  });
+
+  // Reset
+  $("#resetar").addEventListener("click", ()=>{
+    if(confirm("Deseja limpar todas as respostas?")){
+      localStorage.removeItem(LS_KEY);
+      document.getElementById("form").reset();
+      autosave();
+    }
+  });
+
+  // Submit
+  $("#form").addEventListener("submit", async (e)=>{
+    e.preventDefault();
+    if(!validate()){ window.scrollTo({top:0, behavior:"smooth"}); return; }
+    const data = serialize();
+
+    const btn = e.submitter || document.querySelector('button[type="submit"]');
+    const success = $("#sucesso"); success.style.display = "none";
+    const oldLabel = btn.textContent; btn.disabled = true; btn.textContent = "Enviando…";
+
+    try{
+      await postToWebhook(data);
+      success.innerHTML = "✅ Respostas enviadas com sucesso à planilha!";
+      success.style.display = "block";
+      // Se quiser, pode limpar o localStorage aqui:
+      // localStorage.removeItem(LS_KEY);
+    }catch(err){
+      console.error(err);
+      success.innerHTML = "⚠️ Não foi possível enviar agora. Baixamos um arquivo <strong>.json</strong> com suas respostas para você reenviar depois.";
+      success.style.display = "block";
+      downloadJSON(data); // fallback
+    }finally{
+      btn.disabled = false; btn.textContent = oldLabel;
+    }
+  });
+
+  // Hint autosave visual
+  let dots=0;
+  setInterval(()=>{ dots=(dots+1)%4; $("#autosaveHint").textContent = "Salvando automaticamente" + ".".repeat(dots); }, 800);
+
+  restore();
+})();
+</script>
+</body>
+</html>
